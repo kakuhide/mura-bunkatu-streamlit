@@ -5,7 +5,7 @@ from shapely.ops import unary_union
 from config import GROUP_PALETTE, MAP_CRS
 
 
-def build_groups_gdf(gdf: gpd.GeoDataFrame, groups):
+def build_groups_gdf(gdf: gpd.GeoDataFrame, groups, show_city_name: bool = False):
     if gdf.empty or not groups:
         return gpd.GeoDataFrame(geometry=[], crs=MAP_CRS), gdf.copy()
 
@@ -22,6 +22,13 @@ def build_groups_gdf(gdf: gpd.GeoDataFrame, groups):
         group_pop = int(sub["population"].sum())
         group_pop65 = int(sub["pop65"].sum())
 
+        if show_city_name and "city_name" in sub.columns:
+            member_labels = (
+                sub["city_name"].astype(str) + " " + sub["area_name"].astype(str)
+            ).head(10).tolist()
+        else:
+            member_labels = sub["area_name"].astype(str).head(10).tolist()
+
         rows.append(
             {
                 "group_no": i,
@@ -33,7 +40,7 @@ def build_groups_gdf(gdf: gpd.GeoDataFrame, groups):
                 "centroid": [rep_point.x, rep_point.y],
                 "label_text": f"{i}\n{group_pop65:,}人",
                 "fill_color": GROUP_PALETTE[(i - 1) % len(GROUP_PALETTE)],
-                "member_names": "、".join(sub["area_name"].astype(str).head(8).tolist()),
+                "member_names": "、".join(member_labels),
             }
         )
 
